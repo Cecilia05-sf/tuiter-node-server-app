@@ -3,32 +3,30 @@ import * as usersDao from "./users-dao.js";
 var currentUserVar;
 
 const AuthController = (app) => {
-    const register = async(req, res) => {
-        const {username, firstName, lastName, password} = req.body;
-        const user = usersDao.findUserByUsername(username);
+    const register = async (req, res) => {
+        const user = await usersDao.findUserByUsername(req.body.username);
         if (user) {
-            res.sendStatus(409);
+            res.sendStatus(403);
             return;
         }
-        const newUser = usersDao.createUser({
-            username,
-            firstName,
-            lastName,
-            password,
-        });
+        const newUser = await usersDao.createUser(req.body);
         currentUserVar = newUser;
         res.json(newUser);
     };
 
-    const login = (req, res) => {
+    const login = async (req, res) => {
         const username = req.body.username;
         const password = req.body.password;
-        const user = usersDao.findUserByCredentials(username, password);
-        if (user) {
-            currentUserVar = user;
-            res.json(user);
+        if (username && password) {
+            const user = await usersDao.findUserByCredentials(username, password);
+            if (user) {
+                currentUserVar = user;
+                res.json(user);
+            } else {
+                res.sendStatus(403);
+            }
         } else {
-            res.sendStatus(404);
+            res.sendStatus(403);
         }
     };
 
@@ -46,10 +44,10 @@ const AuthController = (app) => {
         res.sendStatus(200);
     };
 
-    const update = (req, res) => {
+    const update = async (req, res) => {
         const userId = req.params.id;
         const updates = req.body;
-        const updatedUser = usersDao.updateUser(userId, updates);
+        const updatedUser = await usersDao.updateUser(userId, updates);
         if (updatedUser) {
             res.json(updatedUser);
         } else {
